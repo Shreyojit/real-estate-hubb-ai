@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Hotel model
+model Hotel {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  title             String
+  description       String
+  images            String[] // Array of image URLs
+  country           String
+  state             String
+  city              String
+  locationDescription String // Renamed from locationDesc
+  gym               Boolean   @default(false) // Fitness center
+  spa               Boolean   @default(false) // Wellness center
+  bar               Boolean   @default(false) // Drinking establishment
+  laundry           Boolean   @default(false) // Laundry services
+  restaurant        Boolean   @default(false) // Dining services
+  shopping          Boolean   @default(false) // Shopping facilities
+  freeParking       Boolean   @default(false) // Complimentary parking
+  bikeRental        Boolean   @default(false) // Bicycle rental services
+  freeWifi          Boolean   @default(false) // Complimentary internet
+  movieNight        Boolean   @default(false) // Movie viewing events
+  swimmingPool      Boolean   @default(false) // Swimming facilities
+  coffeeShop        Boolean   @default(false) // Cafe services
+  addedAt           DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  rooms             Room[]   @relation("HotelRooms")
+  bookings          Booking[] @relation("HotelBookings")
+
+  @@index([userId]) // Index for userId
+}
+
+// Room model
+model Room {
+  id                Int      @id @default(autoincrement())
+  title             String
+  description       String
+  bedCount          Int
+  guestCount        Int
+  bathroomCount     Int
+  kingBed           Int
+  queenBed          Int
+  images            String[] // Array of image URLs
+  breakfastPrice    Float
+  roomPrice         Float
+  roomService       Boolean   @default(false) // In-room dining
+  TV                Boolean   @default(false) // Television availability
+  balcony           Boolean   @default(false) // Balcony access
+  freeWifi          Boolean   @default(false) // Complimentary internet
+  cityView          Boolean   @default(false) // City view availability
+  oceanView         Boolean   @default(false) // Ocean view availability
+  mountainView      Boolean   @default(false) // Mountain view availability
+  forestView        Boolean   @default(false) // Forest view availability
+  airCondition      Boolean   @default(false) // Air conditioning availability
+  soundProof        Boolean   @default(false) // Soundproofing features
+  hotelId           Int
+
+  hotel             Hotel    @relation("HotelRooms", fields: [hotelId], references: [id])
+  bookings          Booking[] @relation("RoomBookings")
+
+  @@index([hotelId]) // Index for hotelId
+}
+
+// Booking model
+model Booking {
+  id                Int      @id @default(autoincrement())
+  username          String
+  userId            Int
+  roomId            Int
+  hotelId           Int
+  hotelOwnerId      Int
+  startDate         DateTime
+  endDate           DateTime
+  breakfastIncluded  Boolean   @default(false) // Breakfast inclusion status
+  currency          String
+  totalPrice        Float
+  paymentStatus     String
+  paymentIntentId   String?
+  bookedAt          DateTime @default(now())
+
+  hotel             Hotel    @relation("HotelBookings", fields: [hotelId], references: [id])
+  room              Room     @relation("RoomBookings", fields: [roomId], references: [id])
+
+  @@index([hotelId]) // Index for hotelId
+  @@index([roomId])   // Index for roomId
+}
