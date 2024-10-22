@@ -87,7 +87,7 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
       </div>
 
       <div className="mt-2 grid gap-2 grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {addedPhotos.length > 0 && addedPhotos.map(link => (
+        {addedPhotos?.length > 0 && addedPhotos.map(link => (
           <PhotoThumbnail 
             key={link} 
             link={link} 
