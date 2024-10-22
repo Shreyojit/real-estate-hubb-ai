@@ -22,8 +22,13 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
     const files = Array.from(ev.target.files);
     const uploadPromises = files.map(file => uploadToCloudinary(file));
 
+    console.log("Uploaded Cloudinary-->",uploadPromises)
+
     try {
       const filenames = await Promise.all(uploadPromises);
+
+      console.log('Uploaded filenames:', filenames); // Check filenames
+      
       onChange((prev) => [...prev, ...filenames]);
     } catch (error) {
       console.error("Error uploading photos:", error);
