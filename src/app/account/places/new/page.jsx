@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from 'next/navigation';
+import Modal from '@/components/test-components/Modal';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Perks from '@/components/Perks';
 import PhotosUploader from '@/components/PhotoUploader';
-import RoomForm from '@/components/RoomForm';
 
-const placeSchema = z.object({
+// Define Zod schema for product form
+const productSchema = z.object({
     title: z.string().min(1, { message: "Title is required" }),
     address: z.string().min(1, { message: "Address is required" }),
     description: z.string().min(1, { message: "Description is required" }),
@@ -22,183 +22,363 @@ const placeSchema = z.object({
     extraInfo: z.string().optional(),
 });
 
-export default function NewPlace() {
-    const router = useRouter();
-    const [redirect, setRedirect] = useState(false);
-    const [fileNames, setFileNames] = useState('');
-    const [perks, setPerks] = useState([]);
-    const [addedPhotos, setAddedPhotos] = useState([]);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [addedRooms, setAddedRooms] = useState([]);
+const ProductForm = () => {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+        title: "",
+        address: "",
+        addedPhotos: [],
+        description: "",
+        perks: [],
+        extraInfo: "",
+        checkIn: "",
+        checkOut: "",
+        maxGuests: 1,
+        price: 100,
+    },
+  });
 
-    const handleRoomSubmit = (roomData) => {
-        setAddedRooms((prev) => [...prev, roomData]);
-        setModalOpen(false);
+  const [modalDataArray, setModalDataArray] = useState([]); // Array to store multiple modal data
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [addedPhotos, setAddedPhotos] = useState([]);
+  const [perks, setPerks] = useState([]);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+
+
+  const fileNames = addedPhotos.map(photo => photo.name).join(', '); // Assuming addedPhotos is an array of objects
+
+  const onSubmit = (data) => {
+    const fullProductData = {
+      ...data,
+      addedPhotos: addedPhotos,
+      perks: perks,
+      modalDetails: modalDataArray, // Add modal data array to form data
     };
 
-    const {
-        register,
-        handleSubmit,
-        setValue,
-        getValues,
-        formState: { errors },
-    } = useForm({
-        resolver: zodResolver(placeSchema),
-        defaultValues: {
-            title: "",
-            address: "",
-            addedPhotos: [],
-            description: "",
-            perks: [],
-            extraInfo: "",
-            checkIn: "",
-            checkOut: "",
-            maxGuests: 1,
-            price: 100,
-        },
-    });
+    // Store in local storage and log to console
+    localStorage.setItem('productData', JSON.stringify(fullProductData));
+    console.log(fullProductData);
 
-    const onSubmit = async (data) => {
-        console.log("Form submitted");
-        console.log("Submitted data:", {
-            ...data,
-            addedPhotos: addedPhotos,
-            perks: perks,
-        });
-        setRedirect(true);
-    };
+    reset(); // Reset the form after submission
+    setModalDataArray([]); // Clear modal data array after submission
+  };
 
-    useEffect(() => {
-        if (redirect) {
-            router.push("/account/places");
-        }
-    }, [redirect, router]);
+  const handleModalSubmit = (newData) => {
+    if (selectedRoom) {
+        // Update existing room
+        setModalDataArray((prevData) =>
+            prevData.map((room, index) =>
+                index === selectedRoom.index ? newData : room
+            )
+        );
+    } else {
+        // Add new room
+        setModalDataArray((prevData) => [...prevData, newData]);
+    }
+    setIsModalOpen(false);
+    setSelectedRoom(null); // Reset selected room after submission
+};
 
-    const preInput = (header, description) => (
-        <>
-            <h2 className="text-2xl mt-4">{header}</h2>
-            <p className="text-gray-500 text-sm">{description}</p>
-        </>
-    );
+const handleDelete = (index) => {
+    setModalDataArray((prevData) => prevData.filter((_, i) => i !== index));
+};
 
-    return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            {preInput('Title', 'Title for your place. should be short and catchy as in advertisement')}
+const handleEdit = (index) => {
+    setSelectedRoom({ index, data: modalDataArray[index] });
+    setIsModalOpen(true);
+};
+
+  const preInput = (label, description) => (
+    <div>
+      <h2 className="text-lg font-semibold">{label}</h2>
+      <p className="text-sm text-gray-500">{description}</p>
+    </div>
+  );
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {preInput('Title', 'Title for your place. Should be short and catchy like an advertisement')}
+        <input
+          {...register("title")}
+          type="text"
+          placeholder="e.g., My lovely apartment"
+          className={`w-full p-2 border rounded ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+        />
+        {errors.title && <p className="text-red-500">{errors.title.message}</p>}
+
+        {preInput('Address', 'Address to this place')}
+        <input
+          {...register("address")}
+          type="text"
+          placeholder="Address"
+          className={`w-full p-2 border rounded ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+        />
+        {errors.address && <p className="text-red-500">{errors.address.message}</p>}
+
+        {preInput('Photos', 'More = better')}
+        <PhotosUploader addedPhotos={addedPhotos} onChange={setAddedPhotos} />
+        {fileNames && <p className="mt-2 text-gray-700">Selected files: {fileNames}</p>}
+
+        {preInput('Description', 'Description of the place')}
+        <textarea
+          {...register("description")}
+          placeholder="Description of your place"
+          className={`w-full p-2 border rounded ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+        />
+        {errors.description && <p className="text-red-500">{errors.description.message}</p>}
+
+        {preInput('Perks', 'Select all the perks of your place')}
+        <Perks selected={perks} onChange={setPerks} />
+
+        {preInput('Details', 'Details of the place')}
+        <div className="grid gap-2 grid-cols-2 md:grid-cols-4">
+          <div>
+            <h3 className="mt-2 -mb-1">Check-in time</h3>
             <input
-                {...register("title")}
-                type="text"
-                placeholder="e.g., My lovely apartment"
-                className={`w-full p-2 border rounded ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+              {...register("checkIn")}
+              type="text"
+              placeholder="14"
+              className={`w-full p-2 border rounded ${errors.checkIn ? 'border-red-500' : 'border-gray-300'}`}
             />
-            {errors.title && <p className="text-red-500">{errors.title.message}</p>}
-            
-            {preInput('Address', 'Address to this place')}
+            {errors.checkIn && <p className="text-red-500">{errors.checkIn.message}</p>}
+          </div>
+          <div>
+            <h3 className="mt-2 -mb-1">Check-out time</h3>
             <input
-                {...register("address")}
-                type="text"
-                placeholder="Address"
-                className={`w-full p-2 border rounded ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+              {...register("checkOut")}
+              type="text"
+              placeholder="11"
+              className={`w-full p-2 border rounded ${errors.checkOut ? 'border-red-500' : 'border-gray-300'}`}
             />
-            {errors.address && <p className="text-red-500">{errors.address.message}</p>}
-
-            {preInput('Photos', 'More = better')}
-            <PhotosUploader addedPhotos={addedPhotos} onChange={setAddedPhotos} />
-            {fileNames && <p className="mt-2 text-gray-700">Selected files: {fileNames}</p>}
-
-            {preInput('Description', 'Description of the place')}
-            <textarea
-                {...register("description")}
-                placeholder="Description of your place"
-                className={`w-full p-2 border rounded ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+            {errors.checkOut && <p className="text-red-500">{errors.checkOut.message}</p>}
+          </div>
+          <div>
+            <h3 className="mt-2 -mb-1">Max number of guests</h3>
+            <input
+              {...register("maxGuests", { valueAsNumber: true })}
+              type="number"
+              placeholder="1"
+              className={`w-full p-2 border rounded ${errors.maxGuests ? 'border-red-500' : 'border-gray-300'}`}
             />
-            {errors.description && <p className="text-red-500">{errors.description.message}</p>}
+            {errors.maxGuests && <p className="text-red-500">{errors.maxGuests.message}</p>}
+          </div>
+          <div>
+            <h3 className="mt-2 -mb-1">Price per night</h3>
+            <input
+              {...register("price", { valueAsNumber: true })}
+              type="number"
+              placeholder="100"
+              className={`w-full p-2 border rounded ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.price && <p className="text-red-500">{errors.price.message}</p>}
+          </div>
+        </div>
 
-            {preInput('Perks', 'Select all the perks of your place')}
-            <Perks selected={perks} onChange={setPerks} />
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className="bg-gray-200 px-4 h-10 mt-4 rounded-2xl"
+        >
+          Add Rooms
+        </button>
 
-            {preInput('Details', 'Details of the place')}
-            <div className="grid gap-2 grid-cols-2 md:grid-cols-4">
-                <div>
-                    <h3 className="mt-2 -mb-1">Check in time</h3>
-                    <input
-                        {...register("checkIn")}
-                        type="text"
-                        placeholder="14"
-                        className={`w-full p-2 border rounded ${errors.checkIn ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.checkIn && <p className="text-red-500">{errors.checkIn.message}</p>}
-                </div>
-                <div>
-                    <h3 className="mt-2 -mb-1">Check out time</h3>
-                    <input
-                        {...register("checkOut")}
-                        type="text"
-                        placeholder="11"
-                        className={`w-full p-2 border rounded ${errors.checkOut ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.checkOut && <p className="text-red-500">{errors.checkOut.message}</p>}
-                </div>
-                <div>
-                    <h3 className="mt-2 -mb-1">Max number of guests</h3>
-                    <input
-                        {...register("maxGuests", { valueAsNumber: true })}
-                        type="number"
-                        placeholder="1"
-                        className={`w-full p-2 border rounded ${errors.maxGuests ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.maxGuests && <p className="text-red-500">{errors.maxGuests.message}</p>}
-                </div>
-                <div>
-                    <h3 className="mt-2 -mb-1">Price per night</h3>
-                    <input
-                        {...register("price", { valueAsNumber: true })}
-                        type="number"
-                        placeholder="100"
-                        className={`w-full p-2 border rounded ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.price && <p className="text-red-500">{errors.price.message}</p>}
-                </div>
+
+
+           {/* Display multiple added modal data */}
+          
+
+
+  
+            {/* Display multiple added modal data */}
+<div className="p-4 bg-white rounded-lg shadow-md">
+  <h3 className="text-lg font-semibold my-4">Hotel Rooms</h3>
+
+  {/* Hotel Rooms Grid */}
+  <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+    {modalDataArray.map((room, index) => (
+      <div key={room.id} className="border rounded-lg shadow-md p-4">
+        
+        {/* Edit and Delete Buttons at the top */}
+        <div className="flex justify-between items-center mb-4">
+          <button
+            onClick={() => handleDelete(index)}
+            className="bg-red-500 text-white py-2 px-4 rounded"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => handleEdit(index)}
+            className="bg-yellow-500 text-white py-2 px-4 rounded"
+          >
+            Update
+          </button>
+        </div>
+
+        <h4 className="text-xl font-semibold mb-2">{room.title}</h4>
+        <p className="text-sm text-gray-600 mb-4">{room.description}</p>
+
+        {/* Room Image */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          {room.addedPhotos.map((photo, photoIndex) => (
+            <div key={photoIndex} className="col-span-1">
+              <img
+                src={photo}
+                alt={`Room photo ${photoIndex + 1}`}
+                className="w-full h-auto object-cover"
+              />
             </div>
+          ))}
+        </div>
 
-            <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                className="bg-gray-200 px-4 h-10 mt-4 rounded-2xl"
-            >
-                Add Rooms
-            </button>
+        {/* Room Amenities */}
+        <div className="grid grid-cols-2 gap-4 content-start text-sm mt-6">
+          {/* Room Service */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M4 4h16M4 8h16m-7 4h7" />
+            </svg>
+            <span>{room.roomService ? 'Room Service Available' : 'No Room Service'}</span>
+          </div>
 
-            {modalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-4 rounded-lg">
-                        <RoomForm onSubmit={handleRoomSubmit} />
-                        <button
-                            onClick={() => setModalOpen(false)}
-                            className="mt-2 bg-gray-500 text-white p-2 rounded"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
+          {/* TV */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M7 8h10m-5-6v12m7-8h2m0 8h-2m2-8v8" />
+            </svg>
+            <span>{room.TV ? 'Has TV' : 'No TV'}</span>
+          </div>
 
-            <div className="mt-4">
-                <h3 className="text-xl">Added Rooms:</h3>
-                {addedRooms.length > 0 ? (
-                    addedRooms.map((room, index) => (
-                        <div key={index} className="border p-2 mt-2">
-                            <h4 className="text-lg font-bold">{room.title}</h4>
-                            <p>{room.description}</p>
-                            <p>Beds: {room.bedCount}, Guests: {room.guestCount}</p>
-                            <p>Price: ${room.roomPrice}</p>
-                        </div>
-                    ))
-                ) : (
-                    <p>No rooms added yet.</p>
-                )}
-            </div>
+          {/* Balcony */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M12 2l4 8h-8l4-8zm0 8v14m-6 0h12" />
+            </svg>
+            <span>{room.balcony ? 'Has Balcony' : 'No Balcony'}</span>
+          </div>
 
-            <button type="submit" className="mt-4 bg-red-500 w-full text-white p-2 rounded">Submit</button>
-        </form>
-    );
-}
+          {/* Free Wifi */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M2 12a10 10 0 0115.88-6.88M2 12a10 10 0 002.46 6.88M2 12l9-9m-9 9l9 9" />
+            </svg>
+            <span>{room.freeWifi ? 'Free Wifi' : 'No Wifi'}</span>
+          </div>
+
+          {/* City View */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M3 17l5-5-5-5m14 10l-5-5 5-5" />
+            </svg>
+            <span>{room.cityView ? 'City View' : 'No City View'}</span>
+          </div>
+
+          {/* Ocean View */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M5 12h14M5 12l7-7m-7 7l7 7m7-7v7" />
+            </svg>
+            <span>{room.oceanView ? 'Ocean View' : 'No Ocean View'}</span>
+          </div>
+
+          {/* Mountain View */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M3 17l5-5-5-5m14 10l-5-5 5-5" />
+            </svg>
+            <span>{room.mountainView ? 'Mountain View' : 'No Mountain View'}</span>
+          </div>
+
+          {/* Forest View */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M12 2l4 8h-8l4-8zm0 8v14m-6 0h12" />
+            </svg>
+            <span>{room.forestView ? 'Forest View' : 'No Forest View'}</span>
+          </div>
+
+          {/* Air Conditioning */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M5 3v4M5 17v4m14-4v4M9 7h6m-6 10h6" />
+            </svg>
+            <span>{room.airCondition ? 'Air Conditioned' : 'No AC'}</span>
+          </div>
+
+          {/* Sound Proofing */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M8 5h8M5 12h14M8 19h8" />
+            </svg>
+            <span>{room.soundProof ? 'Soundproof' : 'Not Soundproof'}</span>
+          </div>
+
+          {/* Room Price */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M3 3h18v18H3V3z" />
+            </svg>
+            <span>{room.roomPrice ? `Room Price: $${room.roomPrice}` : 'Room Price Not Available'}</span>
+          </div>
+
+          {/* Breakfast Price */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M4 6h16v4H4V6z" />
+            </svg>
+            <span>{room.breakfastPrice ? `Breakfast: $${room.breakfastPrice}` : 'No Breakfast Price'}</span>
+          </div>
+
+          {/* Bed Count */}
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M3 6h18v12H3V6z" />
+            </svg>
+            <span>{room.beds ? `${room.beds} Beds Available` : 'No Beds Available'}</span>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+         
+
+
+
+         
+
+
+
+
+
+
+
+        <button type="submit" className="bg-red-500 text-white px-4 py-2 rounded mt-4">
+          Submit
+        </button>
+      </form>
+
+      {/* Modal for Room Details */}
+{isModalOpen && (
+    <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+            setIsModalOpen(false);
+            setSelectedRoom(null); // Reset selected room on close
+        }}
+        onSubmit={handleModalSubmit}
+        roomData={selectedRoom ? selectedRoom.data : null} // Pass the selected room data
+        onDelete={handleDelete} // Pass the delete function
+    />
+)}
+
+
+ 
+
+    </div>
+  );
+};
+
+export default ProductForm;

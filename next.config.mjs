@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-
     images: {
-        domains: ['res.cloudinary.com'], // Allow images from Cloudinary
+        domains: [
+            'res.cloudinary.com',  // Allow images from Cloudinary
+            'images.pexels.com',    // Allow images from Pexels
+        ],
     },
-
 };
 
 export default nextConfig;
