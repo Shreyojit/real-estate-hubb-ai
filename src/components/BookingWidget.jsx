@@ -43,8 +43,10 @@ export function BookingWidget({ hotel, selectedRoom }) {
   };
 
   return (
-    <>
-      <input
+   
+
+     <div className="relative">
+<input
         type="hidden"
         name="startDate"
         value={state[0].startDate.toISOString()}
@@ -81,6 +83,9 @@ export function BookingWidget({ hotel, selectedRoom }) {
         })}
         disabledDay={isDateDisabled} // Function to disable dates in the picker
       />
-    </>
+     </div>
+
+      
+   
   );
 }

@@ -8,7 +8,7 @@ export default function PlaceGallery({ hotel }) {
 
   if (showAllPhotos) {
     return (
-      <div className="absolute inset-0 bg-black text-white min-h-screen">
+      <div className="absolute inset-0 bg-black text-white min-h-screen ">
         <div className="bg-black p-8 grid gap-4">
           <div>
             <h2 className="text-3xl mr-48">Photos of {hotel.title}</h2>
@@ -20,7 +20,7 @@ export default function PlaceGallery({ hotel }) {
             </button>
           </div>
           {hotel?.photos?.length > 0 && hotel.photos.map((photo, index) => (
-            <div className='mx-auto' key={index}> {/* Add key prop */}
+            <div className='mx-auto relative z-0' key={index}> {/* Add key prop */}
               <Image src={photo} alt={`Photo of ${hotel.title}`} />
             </div>
           ))}

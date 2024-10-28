@@ -106,15 +106,17 @@ const hotel = {
         <PlaceGallery hotel={hotel} />
   
         <div className="mt-8 mb-8 grid gap-8 grid-cols-1 md:grid-cols-[2fr_1fr]">
-          <div>
+          <div className=''>
             <h2 className="font-semibold text-2xl">Description</h2>
             <p>{hotel.description}</p>
             <p>Check-in: {hotel.checkIn}</p>
             <p>Check-out: {hotel.checkOut}</p>
             <p>Max number of guests: {hotel.maxGuests}</p>
           </div>
-  
-          <BookingWidget hotel={hotel} selectedRoom={selectedRoom} />
+           
+           <BookingWidget hotel={hotel} selectedRoom={selectedRoom} />
+          
+          
         </div>
   
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
