@@ -1,18 +1,14 @@
 'use client';
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import Image from "next/image";
 import { MapFilterItems } from "@/components/MapFilterItems";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { hotels } from "@/lib/homePageData";
-import { useState } from "react";
 
 function Home() {
   const searchParams = useSearchParams();
-  
-  
 
-  console.log("searchParams--->", searchParams);
   const selectedCategory = searchParams.get("filter");
 
   // State for search filters
@@ -22,8 +18,13 @@ function Home() {
     searchText: searchParams.get("searchText") || "",
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const hotelsPerPage = 6; 
+
   const handleSearchChange = (filters) => {
     setSearchFilters(filters);
+    setCurrentPage(1); // Reset to first page on new search
   };
 
   // Filter hotels based on the selected category and search criteria
@@ -35,49 +36,60 @@ function Home() {
     const hotelDescription = hotel.description.toLowerCase();
     const hotelPerks = hotel.perks.map(perk => perk.toLowerCase());
 
-    // Check if hotel category matches the selected category
     const matchesCategory = selectedCategory 
         ? hotelCategory === selectedCategory.toLowerCase() 
         : true;
 
-    // Check if the country matches the search filter
     const matchesCountry = searchFilters.country
         ? hotelCountry.includes(searchFilters.country.toLowerCase())
         : true;
 
-    // Check if the state matches the search filter
     const matchesState = searchFilters.state
         ? hotelState.includes(searchFilters.state.toLowerCase())
         : true;
 
-    // Check if searchText matches title, description, or perks
     const searchTextLower = searchFilters.searchText.toLowerCase();
     const matchesSearchText = searchFilters.searchText
-        ? hotelTitle.includes(searchTextLower) ||  // Matches Title
-          hotelDescription.includes(searchTextLower) || // Matches Description
-          hotelPerks.some(perk => perk.includes(searchTextLower)) // Matches Perks
+        ? hotelTitle.includes(searchTextLower) ||  
+          hotelDescription.includes(searchTextLower) || 
+          hotelPerks.some(perk => perk.includes(searchTextLower))
         : true;
 
-    // Return true if all of the filters match
     return matchesCategory && matchesCountry && matchesState && matchesSearchText;
   });
 
-  console.log("Filtered Hotels--->", filteredHotels);
+  // Pagination logic
+  const totalPages = Math.ceil(filteredHotels.length / hotelsPerPage);
+  const indexOfLastHotel = currentPage * hotelsPerPage;
+  const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
+  const currentHotels = filteredHotels.slice(indexOfFirstHotel, indexOfLastHotel);
+
+  console.log("currentHotels--->", currentHotels);
+  console.log("Current Page:", currentPage); // Debugging line
+
+  // Handler for next page button
+  const handleNextPage = () => {
+    setCurrentPage(prev => {
+      const newPage = Math.min(prev + 1, totalPages);
+      console.log("Next Page:", newPage); // Debugging line
+      return newPage;
+    });
+  };
 
   return (
     <div className="mt-8">
       <div className="m-5">
         <MapFilterItems 
           onSearchChange={handleSearchChange} 
-          searchFilters={searchFilters} // Pass down the search filters
+          searchFilters={searchFilters} 
         />
       </div>
 
       <div className="grid gap-x-6 gap-y-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
-        {filteredHotels.length === 0 ? (
-          <p>No hotels found based on the applied filters.</p> // Display a message if no hotels match
+        {currentHotels.length === 0 ? (
+          <p>No hotels found based on the applied filters.</p>
         ) : (
-          filteredHotels.map(hotel => (
+          currentHotels.map(hotel => (
             <Link key={hotel.id} href={`/hotel/${hotel.id}`}>
               <div className="bg-white mb-2 rounded-2xl flex flex-col ">
                 {hotel.photos?.[0] && (
@@ -98,6 +110,27 @@ function Home() {
             </Link>
           ))
         )}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-4">
+        <button 
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-gray-300 rounded-lg mx-2"
+        >
+          Previous
+        </button>
+        <span className="flex items-center mx-2">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button 
+          onClick={handleNextPage} 
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-gray-300 rounded-lg mx-2"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
