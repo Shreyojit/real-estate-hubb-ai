@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
       <body>
         <Toaster />
         <div className="flex flex-col max-w-4xl min-h-screen px-8 py-4 mx-auto">
-          <Header /> {/* Include Header at the top of the layout */}
+          
           {children}  {/* Place children inside the layout's div */}
         </div>
       </body>
