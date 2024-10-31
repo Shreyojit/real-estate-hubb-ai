@@ -6,13 +6,83 @@
 @import "slick-carousel/slick/slick.css";
 @import "slick-carousel/slick/slick-theme.css";
 
+/* globals.css */
 
+html {
+  @apply bg-white text-black;
+}
+
+html.dark {
+  @apply bg-gray-900 text-gray-100; /* Background and text for dark mode */
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+
+/* globals.css */
+
+button.primary {
+  @apply w-full p-2 text-white bg-primary rounded-2xl;
+}
+
+.dark button.primary {
+  @apply bg-primary-dark text-gray-100;
+}
+
+/* For cards or other elements */
+.card {
+  @apply bg-white text-black;
+}
+
+.dark .card {
+  @apply bg-gray-800 text-gray-100;
+}
+
+
+/* Dark mode for the entire page */
+html.dark {
+  @apply bg-gray-900 text-gray-100;
+}
+
+body.dark {
+  @apply bg-gray-900 text-gray-100;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .text-gray-500 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-400;
+}
+
+.dark .border-gray-300 {
+  @apply border-gray-600;
+}
+
+/* Slick Carousel dark styles */
+.dark .slick-prev:before, 
+.dark .slick-next:before {
+  color: #D1D5DB; /* Light gray color for carousel arrows */
+}
 
 /* Custom components with Tailwind */
 @layer components {
+  /* Button styling for dark mode */
   button.primary {
     @apply w-full p-2 text-white bg-primary rounded-2xl;
   }
+
+  .dark button.primary {
+    @apply bg-primary-dark text-gray-100;
+  }
+  
 
   /* Additional styles for the slider, if needed */
   .slick-slide {

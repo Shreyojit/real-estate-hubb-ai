@@ -5,6 +5,8 @@ const nextConfig = {
       'www.beatsbydre.com', // Existing domain
       'images.pexels.com',   // Allow images from Pexels
       'a0.muscache.com',     // Add Airbnb image source
+      'unsplash.com',  
+      'images.unsplash.com'      // Allow images from Unsplash
     ],
     remotePatterns: [
       {
@@ -26,6 +28,6 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
   },
-}
+};
 
 module.exports = nextConfig;

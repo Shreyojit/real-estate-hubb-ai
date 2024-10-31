@@ -6,11 +6,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { hotels } from "@/lib/homePageData";
 
+
 function Home() {
   const searchParams = useSearchParams();
 
   const selectedCategory = searchParams.get("filter");
 
+ 
   // State for search filters
   const [searchFilters, setSearchFilters] = useState({
     country: searchParams.get("country") || "",
