@@ -5,10 +5,15 @@ import { MapFilterItems } from "@/components/MapFilterItems";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { hotels } from "@/lib/homePageData";
+import { useSession } from 'next-auth/react';
 
 
 function Home() {
   const searchParams = useSearchParams();
+
+  const { data: session } = useSession();
+
+  console.log("User data:", session?.user);
 
   const selectedCategory = searchParams.get("filter");
 

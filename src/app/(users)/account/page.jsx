@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
+    
     const [isAdmin, setIsAdmin] = useState(false);
     const user = session?.user || {}; // Safely default user
 

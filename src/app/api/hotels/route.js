@@ -4,33 +4,20 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Define the handler for the GET method
-export async function GET(request) {
-  try {
-    const hotels = await prisma.hotel.findMany({
-      include: {
-        rooms: true, // Include rooms with each hotel
-      },
-    });
-    return NextResponse.json(hotels, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching hotels:", error);
-    return NextResponse.json({ message: "Failed to fetch hotels" }, { status: 500 });
-  }
-}
-
 // Define the handler for the POST method
 export async function POST(request) {
   const session = await getServerSession(request);
   console.log("Session data:", session);
   
-  // Optionally check if the user is authenticated
+  // Check for an active session to ensure the user is authenticated
   if (!session || !session.user) {
     console.log("Unauthorized access attempt");
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  const userId = session.user.id; // Assuming user ID is available in the session
   let data;
+  
   try {
     data = await request.json();
     console.log("Parsed data:", data);
@@ -48,9 +35,10 @@ export async function POST(request) {
   }
 
   try {
-    // Create a new hotel with rooms
+    // Create a new hotel with rooms, including the userId
     const hotel = await prisma.hotel.create({
       data: {
+        userId, // Associate the hotel with the logged-in user
         title,
         description,
         images,

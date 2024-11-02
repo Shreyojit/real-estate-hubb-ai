@@ -30,7 +30,7 @@ export const authOptions = {
 
         if (user && bcrypt.compareSync(password, user.password)) {
           console.log("User authenticated:", user);
-          return user;
+          return { id: user.id, email: user.email, name: user.name }; // Return a simplified user object
         }
 
         console.log("Authentication failed for user:", email);
@@ -39,7 +39,12 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token, user }) {
+    async session({ session, token }) {
+      // Add user ID to the session object
+      if (token.id) {
+        session.user.id = token.id;
+      }
+
       // Retrieve the userInfo record to check admin status
       const userInfo = await prisma.userInfo.findUnique({
         where: { email: session.user.email },
