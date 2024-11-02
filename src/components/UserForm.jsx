@@ -56,7 +56,7 @@ export default function UserForm({ user = {}, isAdmin, onSave }) {
           setAddressProp={handleAddressChange}
         />
 
-        {isAdmin && (
+        {!isAdmin && (
           <div>
             <label
               className="p-2 inline-flex items-center gap-2 mb-2 text-gray-500 text-sm leading-tight"
