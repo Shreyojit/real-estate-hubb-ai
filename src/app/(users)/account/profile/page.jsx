@@ -18,6 +18,9 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
+       <button className="max-w-sm mt-2 primary">
+        My Profile
+      </button>
       <span>
         Logged in as {user}
       </span>
