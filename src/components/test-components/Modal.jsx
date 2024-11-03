@@ -64,6 +64,7 @@ export default function Modal({ onSubmit, onClose, roomData, onDelete }) {
             ...data,
             addedPhotos: addedPhotos,
         };
+        
 
         localStorage.setItem('roomData', JSON.stringify(newRoom));
         console.log("New Room---->", newRoom);

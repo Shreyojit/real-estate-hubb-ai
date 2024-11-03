@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Perks from '@/components/Perks';
 import PhotosUploader from '@/components/PhotoUploader';
+import { useSession } from 'next-auth/react';
 
 // Define Zod schema for product form
 const productSchema = z.object({
@@ -20,7 +21,19 @@ const productSchema = z.object({
     addedPhotos: z.array(z.string()).optional(),
     perks: z.array(z.string()).optional(),
     extraInfo: z.string().optional(),
+    country: z.string().min(1, { message: "Country is required" }),
+    state: z.string().min(1, { message: "State is required" }),
+    city: z.string().min(1, { message: "City is required" }),
 });
+
+
+
+
+
+
+
+
+
 
 const ProductForm = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -36,6 +49,10 @@ const ProductForm = () => {
         checkOut: "",
         maxGuests: 1,
         price: 100,
+        country: "", // Default country value
+            state: "",   // Default state value
+            city:"",
+
     },
   });
 
@@ -48,21 +65,101 @@ const ProductForm = () => {
 
   const fileNames = addedPhotos.map(photo => photo.name).join(', '); // Assuming addedPhotos is an array of objects
 
-  const onSubmit = (data) => {
+  // const onSubmit = (data) => {
+  //   const fullProductData = {
+  //     ...data,
+  //     addedPhotos: addedPhotos,
+  //     perks: perks,
+  //     modalDetails: modalDataArray, // Add modal data array to form data
+  //   };
+
+  //   // Store in local storage and log to console
+  //   localStorage.setItem('productData', JSON.stringify(fullProductData));
+  //   console.log(fullProductData);
+
+  //   reset(); // Reset the form after submission
+  //   setModalDataArray([]); // Clear modal data array after submission
+  // };
+
+
+
+
+
+
+
+
+
+  const onSubmit = async (data) => {
+
+    console.log("data is--->",data)
+
+    const updatedModalDataArray = modalDataArray.map(room => ({
+      ...room,
+      images: room.addedPhotos, // Rename addedPhotos to images
+      addedPhotos: undefined,    // Remove addedPhotos from the object
+  }));
+
+
     const fullProductData = {
       ...data,
-      addedPhotos: addedPhotos,
-      perks: perks,
-      modalDetails: modalDataArray, // Add modal data array to form data
+      images:addedPhotos,
+      perks,
+     
+      rooms: updatedModalDataArray,
     };
 
-    // Store in local storage and log to console
-    localStorage.setItem('productData', JSON.stringify(fullProductData));
-    console.log(fullProductData);
+    console.log("Sending data to backend:", fullProductData); // Log data before sending to backend
 
-    reset(); // Reset the form after submission
-    setModalDataArray([]); // Clear modal data array after submission
+    try {
+      const createdHotel = await createHotelWithRooms(fullProductData);
+      console.log("Created hotel:", createdHotel);
+
+      // Reset the form and modal data array after successful submission
+      reset();
+      setModalDataArray([]);
+      setAddedPhotos([]);
+      setPerks([]);
+      setSubmissionError(null);
+    } catch (error) {
+      console.error("Error creating hotel:", error);
+      setSubmissionError(error.message || "Failed to create hotel");
+    }
   };
+
+  const createHotelWithRooms = async (hotelData) => {
+    try {
+      const response = await fetch('/api/hotels', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(hotelData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create hotel');
+      }
+
+      const hotel = await response.json();
+      return hotel;
+    } catch (error) {
+      console.error('Error in createHotelWithRooms:', error);
+      throw error;
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
+
 
   const handleModalSubmit = (newData) => {
     if (selectedRoom) {
@@ -116,6 +213,43 @@ const handleEdit = (index) => {
           className={`w-full p-2 border rounded ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
         />
         {errors.address && <p className="text-red-500">{errors.address.message}</p>}
+
+
+        {preInput('Country', 'Select your country')}
+            <input
+                {...register("country")}
+                type="text"
+                placeholder="e.g., United States"
+                className={`w-full p-2 border rounded ${errors.country ? 'border-red-500' : 'border-gray-300'}`}
+                aria-invalid={errors.country ? "true" : "false"}
+            />
+            {errors.country && <p className="text-red-500">{errors.country.message}</p>}
+
+            {preInput('State', 'Select your state')}
+            <input
+                {...register("state")}
+                type="text"
+                placeholder="e.g., California"
+                className={`w-full p-2 border rounded ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
+                aria-invalid={errors.state ? "true" : "false"}
+            />
+            {errors.state && <p className="text-red-500">{errors.state.message}</p>}
+
+            {preInput('City', 'Enter the city')}
+<input
+    {...register("city")}
+    type="text"
+    placeholder="e.g., San Francisco"
+    className={`w-full p-2 border rounded ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+    aria-invalid={errors.city ? "true" : "false"}
+/>
+{errors.city && <p className="text-red-500">{errors.city.message}</p>}
+
+
+
+
+
+
 
         {preInput('Photos', 'More = better')}
         <PhotosUploader addedPhotos={addedPhotos} onChange={setAddedPhotos} />

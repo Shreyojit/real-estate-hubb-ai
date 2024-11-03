@@ -47,7 +47,7 @@ model Hotel {
   country           String
   state             String
   city              String
-  locationDescription String // Renamed from locationDesc
+  locationDescription String?
   gym               Boolean   @default(false) // Fitness center
   spa               Boolean   @default(false) // Wellness center
   bar               Boolean   @default(false) // Drinking establishment
